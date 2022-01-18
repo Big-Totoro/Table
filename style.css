@@ -43,3 +43,16 @@ td, th {
     justify-content: space-between;
     align-items: center;
 }
+
+.pager select {
+    margin: 5px 0 5px 5px
+}
+
+.pager button {
+    margin: 5px 5px 5px 0;
+    width: 30px;
+}
+
+.pager .active {
+    border: 2px solid black;
+}

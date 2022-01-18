@@ -1,4 +1,11 @@
+// Идентификатор элемента для выбора количество отображаемых строк на странице
 const ITEMS_PER_PAGE_ELEMENT = "itemsPerPage";
+// Идентификатор кнопки Назад
+const PREV_BUTTON_ID = "prevButton";
+// Идентификатор кнопки Следующая
+const NEXT_BUTTON_ID = "nextButton";
+// Идентификатор префикса кнопки "Перейти на страницу номер ", например, "page-0"
+const PAGE_NUMBER_PREFIX_ID = "page-";
 
 /**
  * Создаёт Таблицу в HTML разметке
@@ -11,6 +18,9 @@ const ITEMS_PER_PAGE_ELEMENT = "itemsPerPage";
  * @constructor
  */
 function Table(tableElement, pagesElement, rowsNumber, pagesNumber, header, data) {
+    /**
+     * Проверяем входные данные на корректность
+     */
     if (!tableElement) {
         throw Error("Table element should be provided");
     }
@@ -28,7 +38,11 @@ function Table(tableElement, pagesElement, rowsNumber, pagesNumber, header, data
      * Создаём первоначальную структуру Таблицы в HTML
      */
     createTable(tableElement, rowsNumber, pagesNumber, header, data);
-    createPager(pagesElement, rowsNumber, pagesNumber, data);
+
+    /**
+     * Создаём переключатель страниц таблицы
+     */
+    createPager(pagesElement, rowsNumber, pagesNumber, 1, data);
 }
 
 /**
@@ -135,23 +149,31 @@ function createBody(tableElement, rowsNumber, data = []) {
  * @param pagesElement ссылка на элемент, котором будет создан переключатель страниц
  * @param rowsNumber количество строк в таблицы для отображения пользователю
  * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
+ * @param currentPage номер текущей отображаемой страницы
  * @param data данные для отображения
  */
-function createPager(pagesElement, rowsNumber, pagesNumber, data = []) {
+function createPager(pagesElement, rowsNumber, pagesNumber, currentPage, data = []) {
     /**
      * Добавим элемент Выпадающий список для выбора количества элементов отображения на странице
      */
-    createItemPerPageSelector(pagesElement);
+    createItemsPerPageSelector(pagesElement);
+
+    /**
+     * Создадим элементы управления для переключения страниц: кнопки Назад, Следующая и кнопки для перехода
+     * к конкретной странице
+     */
+    createControlButtons(pagesElement, rowsNumber, pagesNumber, currentPage, data);
 }
 
 /**
  * Создаёт элемент Выпадающий список для выбора количества элементов отображения на странице
  * @param pagesElement родительский контейнер в котором будет размещён элемент Выпадающий список
  */
-function createItemPerPageSelector(pagesElement) {
+function createItemsPerPageSelector(pagesElement) {
     // Создаём элемент Select для отображения опций
     const selectorElement = document.createElement("select");
     selectorElement.id = ITEMS_PER_PAGE_ELEMENT;
+    selectorElement.onchange = itemsPerPageChangedHandler;
 
     // Массив, который содержит допустимые опции
     const options = ["10", "20", "50", "100"];
@@ -169,7 +191,159 @@ function createItemPerPageSelector(pagesElement) {
         selectorElement.appendChild(optionElement);
     });
 
+    // Добавляем элемент select к контейнеру div, который содержит элементы управления переключением страниц
     pagesElement.appendChild(selectorElement);
+}
+
+/**
+ * Создаёт кнопки управления для переключения страниц
+ * @param pagesElement родительский контейнер в котором будет размещён элемент Выпадающий список
+ * @param rowsNumber количество строк в таблицы для отображения пользователю
+ * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
+ * @param currentPage номер текущей отображаемой страницы
+ * @param data данные для отображения
+ */
+function createControlButtons(pagesElement, rowsNumber, pagesNumber, currentPage, data = []) {
+    const containerElement = document.createElement("div");
+
+    // Добавим кнопку "Назад"
+    const prevButton = document.createElement("button");
+    prevButton.id = PREV_BUTTON_ID;
+    prevButton.innerText = "<<";
+    prevButton.onclick = prevButtonHandler;
+    // Добавляем кнопку в контейнер
+    containerElement.appendChild(prevButton);
+
+    // Добавляем кнопки перехода на конкретную страницу
+    [...Array(getNumberOfPages(rowsNumber, pagesNumber, data))].forEach((page, index) => {
+        // Создаём кнопку
+        let buttonElement = document.createElement("button");
+        let buttonNumber = String(index + 1);
+        // Назначаем кнопке id равный "Префикс + индекс кнопки"
+        buttonElement.id = PAGE_NUMBER_PREFIX_ID + index;
+        buttonElement.onclick = buttonHandler;
+        buttonElement.innerText = buttonNumber;
+        buttonElement.value = index;
+        // Если кнопка соответствует выбранной странице, то выделить её
+        if (index === currentPage - 1) {
+            setButtonActive(buttonElement);
+        }
+
+        // Добавляем кнопку в контейнер
+        containerElement.appendChild(buttonElement);
+    });
+
+    // Добавим кнопку "Следующая"
+    const nextButton = document.createElement("button");
+    nextButton.id = NEXT_BUTTON_ID;
+    nextButton.onclick = nextButtonHandler;
+    nextButton.innerText = ">>";
+    // Добавляем кнопку в контейнер
+    containerElement.appendChild(nextButton);
+
+    pagesElement.appendChild(containerElement);
+}
+
+/**
+ * Возвращает вычисленное значение количества страниц в зависимости от объёма данных
+ * @param rowsNumber количество строк в таблицы для отображения пользователю
+ * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
+ * @param data данные для отображения
+ * @returns {number} количество страниц
+ */
+function getNumberOfPages(rowsNumber, pagesNumber, data = []) {
+    if (data.length <= 1) {
+        return 1;
+    }
+
+    let pages = data.length / pagesNumber;
+    let additionalPage = data.length % pagesNumber;
+
+    return pages + additionalPage;
+}
+
+/**
+ * Обработчик события на изменение количества элементов на станице
+ * @param e
+ */
+const itemsPerPageChangedHandler = (e) => {
+    console.log("itemsPerPageChangedHandler", e.target.value);
+}
+
+/**
+ * Обработчик нажатия кнопки Назад
+ * @param e
+ */
+const prevButtonHandler = (e) => {
+    // Выбираем Кнопку, которая в данный момент указывает на активную страницу
+    const activeButton = document.querySelector("button[id ^= 'page-'][class='active']");
+    // Берём номер страницы
+    const activeButtonNumber = activeButton.value;
+
+    // Если это первая страница, то назад уже перейти не можем
+    if (activeButtonNumber == 0) {
+        return;
+    }
+
+    // Очищаем активные стили со всех кнопок
+    clearButtons();
+
+    // Выбираем кнопку слева от ранее активной
+    const prevButton = document.querySelector(`button[id = 'page-${activeButtonNumber - 1}']`);
+
+    // Делаем активной кнопку слева
+    setButtonActive(prevButton);
+}
+
+/**
+ * Обработчик нажатия кнопки Следующая
+ * @param e
+ */
+const nextButtonHandler = (e) => {
+    // Выбираем все кнопки с номерами страниц
+    const buttons = document.querySelectorAll("button[id ^= 'page-']");
+    // Выбираем Кнопку, которая в данный момент указывает на активную страницу
+    const activeButton = document.querySelector("button[id ^= 'page-'][class='active']");
+    // Берём номер страницы
+    const activeButtonNumber = Number(activeButton.value);
+    // Если это последняя страница, то вперёд уже перейти не можем
+    if (activeButtonNumber == buttons.length - 1) {
+        return;
+    }
+
+    // Очищаем активные стили со всех кнопок
+    clearButtons();
+
+    // Выбираем кнопку справа от ранее активной
+    const nextButton = document.querySelector(`button[id = 'page-${activeButtonNumber + 1}']`);
+
+    // Делаем активной кнопку слева
+    setButtonActive(nextButton);
+}
+
+/**
+ * Обработчик нажатия кнопки с номером страницы
+ * @param e
+ */
+const buttonHandler = (e) => {
+    clearButtons();
+    setButtonActive(e.target);
+}
+
+/**
+ * Убирает со всех копок выделенный/активный стиль
+ */
+function clearButtons() {
+    const buttons = document.querySelectorAll("button[id ^= 'page-']");
+    buttons.forEach(button => button.classList.remove("active"));
+}
+
+/**
+ * Выделяет стилем кнопку с выбранной страницей
+ * @param buttonElement элемент
+ */
+function setButtonActive(buttonElement) {
+    buttonElement.classList.add("active");
 }
 
 /**
