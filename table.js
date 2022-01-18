@@ -372,14 +372,26 @@ class Table {
         buttonElement.classList.add("active");
     }
 
+    /**
+     * Удаляет все дочерние элементы для узла
+     * @param parent элемент, у которого необходимо удалить все дочерние элементы
+     */
     #clearChildrenElements(parent) {
         parent.textContent = "";
     }
 
+    /**
+     * Возвращает элемент Таблица
+     * @returns {*}
+     */
     #getTable() {
         return this.#tableElement;
     }
 
+    /**
+     * Возвращает ссылку на элемент с кнопками переключения страниц
+     * @returns {*}
+     */
     #getPager() {
         return this.#pagesElement;
     }
