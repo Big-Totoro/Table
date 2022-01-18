@@ -6,6 +6,8 @@ const PREV_BUTTON_ID = "prevButton";
 const NEXT_BUTTON_ID = "nextButton";
 // Идентификатор префикса кнопки "Перейти на страницу номер ", например, "page-0"
 const PAGE_NUMBER_PREFIX_ID = "page-";
+// Идентификатор контейнера кнопок
+const BUTTONS_CONTAINER_ID = "container";
 
 /**
  * Создаёт Таблицу в HTML разметке
@@ -17,345 +19,381 @@ const PAGE_NUMBER_PREFIX_ID = "page-";
  * @param data данные для отображения
  * @constructor
  */
-function Table(tableElement, pagesElement, rowsNumber, pagesNumber, header, data) {
-    /**
-     * Проверяем входные данные на корректность
-     */
-    if (!tableElement) {
-        throw Error("Table element should be provided");
-    }
-    if (!pagesElement) {
-        throw Error("Pages element should be provided");
-    }
-    if (rowsNumber < 3) {
-        throw Error("A number of rows should be more then tree elements");
-    }
-    if (pagesNumber < 1) {
-        throw Error("A number of pages should be more then one element");
-    }
+class Table {
+    #tableElement;
+    #pagesElement;
+    #rowsNumber;
+    #pagesNumber;
+    #header;
+    #data;
 
-    /**
-     * Создаём первоначальную структуру Таблицы в HTML
-     */
-    createTable(tableElement, rowsNumber, pagesNumber, header, data);
-
-    /**
-     * Создаём переключатель страниц таблицы
-     */
-    createPager(pagesElement, rowsNumber, pagesNumber, 1, data);
-}
-
-/**
- * Создаёт таблицу в HTML разметке
- * @param tableElement ссылка на элемент Table в DOM
- * @param rowsNumber количество строк в таблицы для отображения пользователю
- * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
- * @param header список Заголовков колонок Таблицы
- * @param data данные для отображения
- */
-function createTable(tableElement, rowsNumber, pagesNumber, header, data) {
-    createHeader(tableElement, header, data);
-    createBody(tableElement, rowsNumber, data);
-}
-
-/**
- * Создаёт Заголовок Таблицы
- * @param tableElement ссылка на элемент Table в DOM
- * @param header список Заголовков колонок Таблицы
- * @param data данные для отображения
- */
-function createHeader(tableElement, header = [], data = []) {
-    let headerCaption;
-
-    /**
-     * Если нам передали массив с названиями Заголовков колонок, то используем его.
-     * Иначе попытаемся взять названия Заголовков как Имена свойств из данных.
-     * Если нам не передели ни Заголовков, не Данных, то просто выходим.
-     */
-    if (header.length !== 0) {
-        headerCaption = header;
-    } else if (data.length > 0) {
-        headerCaption = Object.keys(data[0]);
-    } else {
-        return;
-    }
-
-    /**
-     * Создаём элемент Строка для представления Заголовков
-     */
-    let tr = document.createElement("tr");
-
-    /**
-     * Проходим по всем Заголовкам и добавляем Колонки к Строке
-     */
-    headerCaption.forEach((caption) => {
-        let th = document.createElement("th");
-        th.innerText = caption;
-        tr.appendChild(th);
-    });
-
-    /**
-     * Создаём элемент Заголовок и добавляем к нему Строку с Заголовками Колонок
-     */
-    const thead = document.createElement("thead");
-    thead.appendChild(tr);
-
-    /**
-     * Добавили к Таблицу Заголовок
-     */
-    tableElement.appendChild(thead);
-}
-
-/**
- * Создаёт тело Таблицы
- * @param tableElement ссылка на элемент Table в DOM
- * @param rowsNumber количество строк в таблицы для отображения пользователю
- * @param data данные для отображения
- */
-function createBody(tableElement, rowsNumber, data = []) {
-    if (data <= 0) {
-        return;
-    }
-
-    /**
-     * Сначала мы фильтруем массив data, чтобы взять не более rowsNumber элементов из data. Для этого используем index,
-     * который говорит нам индекс элемента массива.
-     * Затем проходим по каждому элементу массива data. А в нём у нас хранятся объекты. Поэтому мы берём все значения
-     * свойств объекта с помощью Object.values(). Он нам возвращает массив значений и мы проходим по этому массиву и
-     * добавляем в разметку Значения.
-     */
-    data
-        .filter((_, index) => index < rowsNumber)
-        .forEach((element) => {
-            // Создаём элемент tr - Строка
-            let tr = document.createElement("tr");
-
-            Object.values(element).forEach(e => {
-                // Создаём элемент td - Ячейка
-                let td = document.createElement("td");
-                // Устанавливаем текст Ячейки в значение из объекта
-                td.innerText = String(e);
-                // Добавляем Ячейку к Строке
-                tr.appendChild(td);
-            });
-
-            // Добавляем Строку к Таблице
-            tableElement.appendChild(tr);
-        });
-}
-
-/**
- * Создаёт переключатель страниц таблицы
- * @param pagesElement ссылка на элемент, котором будет создан переключатель страниц
- * @param rowsNumber количество строк в таблицы для отображения пользователю
- * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
- * @param currentPage номер текущей отображаемой страницы
- * @param data данные для отображения
- */
-function createPager(pagesElement, rowsNumber, pagesNumber, currentPage, data = []) {
-    /**
-     * Добавим элемент Выпадающий список для выбора количества элементов отображения на странице
-     */
-    createItemsPerPageSelector(pagesElement);
-
-    /**
-     * Создадим элементы управления для переключения страниц: кнопки Назад, Следующая и кнопки для перехода
-     * к конкретной странице
-     */
-    createControlButtons(pagesElement, rowsNumber, pagesNumber, currentPage, data);
-}
-
-/**
- * Создаёт элемент Выпадающий список для выбора количества элементов отображения на странице
- * @param pagesElement родительский контейнер в котором будет размещён элемент Выпадающий список
- */
-function createItemsPerPageSelector(pagesElement) {
-    // Создаём элемент Select для отображения опций
-    const selectorElement = document.createElement("select");
-    selectorElement.id = ITEMS_PER_PAGE_ELEMENT;
-    selectorElement.onchange = itemsPerPageChangedHandler;
-
-    // Массив, который содержит допустимые опции
-    const options = ["10", "20", "50", "100"];
-    // Проходим по массиву опций и добавляем их к элементу select
-    options.forEach(opt => {
-        // Создаём элемент опция
-        let optionElement = document.createElement("option");
-
-        // Назначаем значение
-        optionElement.value = opt;
-        // Назначаем текст для отображения пользователю
-        optionElement.innerText = opt;
-
-        // Добавляем элемент option к элементу select
-        selectorElement.appendChild(optionElement);
-    });
-
-    // Добавляем элемент select к контейнеру div, который содержит элементы управления переключением страниц
-    pagesElement.appendChild(selectorElement);
-}
-
-/**
- * Создаёт кнопки управления для переключения страниц
- * @param pagesElement родительский контейнер в котором будет размещён элемент Выпадающий список
- * @param rowsNumber количество строк в таблицы для отображения пользователю
- * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
- * @param currentPage номер текущей отображаемой страницы
- * @param data данные для отображения
- */
-function createControlButtons(pagesElement, rowsNumber, pagesNumber, currentPage, data = []) {
-    const containerElement = document.createElement("div");
-
-    // Добавим кнопку "Назад"
-    const prevButton = document.createElement("button");
-    prevButton.id = PREV_BUTTON_ID;
-    prevButton.innerText = "<<";
-    prevButton.onclick = prevButtonHandler;
-    // Добавляем кнопку в контейнер
-    containerElement.appendChild(prevButton);
-
-    // Добавляем кнопки перехода на конкретную страницу
-    [...Array(getNumberOfPages(rowsNumber, pagesNumber, data))].forEach((page, index) => {
-        // Создаём кнопку
-        let buttonElement = document.createElement("button");
-        let buttonNumber = String(index + 1);
-        // Назначаем кнопке id равный "Префикс + индекс кнопки"
-        buttonElement.id = PAGE_NUMBER_PREFIX_ID + index;
-        buttonElement.onclick = buttonHandler;
-        buttonElement.innerText = buttonNumber;
-        buttonElement.value = index;
-        // Если кнопка соответствует выбранной странице, то выделить её
-        if (index === currentPage - 1) {
-            setButtonActive(buttonElement);
+    constructor(tableElement, pagesElement, rowsNumber, pagesNumber, header, data) {
+        /**
+         * Проверяем входные данные на корректность
+         */
+        if (!tableElement) {
+            throw Error("Table element should be provided");
+        }
+        if (!pagesElement) {
+            throw Error("Pages element should be provided");
+        }
+        if (rowsNumber < 3) {
+            throw Error("A number of rows should be more then tree elements");
+        }
+        if (pagesNumber < 1) {
+            throw Error("A number of pages should be more then one element");
         }
 
+        this.#tableElement = tableElement;
+        this.#pagesElement = pagesElement;
+        this.#rowsNumber = rowsNumber;
+        this.#pagesNumber = pagesNumber;
+        this.#header = header;
+        this.#data = data;
+
+        /**
+         * Создаём первоначальную структуру Таблицы в HTML
+         */
+        this.#createTable(tableElement, rowsNumber, pagesNumber, header, data);
+
+        /**
+         * Создаём переключатель страниц таблицы
+         */
+        this.#createPager(pagesElement, rowsNumber, pagesNumber, 1, data);
+    }
+
+    /**
+     * Создаёт таблицу в HTML разметке
+     * @param tableElement ссылка на элемент Table в DOM
+     * @param rowsNumber количество строк в таблицы для отображения пользователю
+     * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
+     * @param header список Заголовков колонок Таблицы
+     * @param data данные для отображения
+     */
+    #createTable(tableElement, rowsNumber, pagesNumber, header, data) {
+        this.#createHeader(tableElement, header, data);
+        this.#createBody(tableElement, rowsNumber, data);
+    }
+
+    /**
+     * Создаёт Заголовок Таблицы
+     * @param tableElement ссылка на элемент Table в DOM
+     * @param header список Заголовков колонок Таблицы
+     * @param data данные для отображения
+     */
+    #createHeader(tableElement, header = [], data = []) {
+        let headerCaption;
+
+        /**
+         * Если нам передали массив с названиями Заголовков колонок, то используем его.
+         * Иначе попытаемся взять названия Заголовков как Имена свойств из данных.
+         * Если нам не передели ни Заголовков, не Данных, то просто выходим.
+         */
+        if (header.length !== 0) {
+            headerCaption = header;
+        } else if (data.length > 0) {
+            headerCaption = Object.keys(data[0]);
+        } else {
+            return;
+        }
+
+        /**
+         * Создаём элемент Строка для представления Заголовков
+         */
+        let tr = document.createElement("tr");
+
+        /**
+         * Проходим по всем Заголовкам и добавляем Колонки к Строке
+         */
+        headerCaption.forEach((caption) => {
+            let th = document.createElement("th");
+            th.innerText = caption;
+            tr.appendChild(th);
+        });
+
+        /**
+         * Создаём элемент Заголовок и добавляем к нему Строку с Заголовками Колонок
+         */
+        const thead = document.createElement("thead");
+        thead.appendChild(tr);
+
+        /**
+         * Добавили к Таблицу Заголовок
+         */
+        tableElement.appendChild(thead);
+    }
+
+    /**
+     * Создаёт тело Таблицы
+     * @param tableElement ссылка на элемент Table в DOM
+     * @param rowsNumber количество строк в таблицы для отображения пользователю
+     * @param data данные для отображения
+     */
+    #createBody(tableElement, rowsNumber, data = []) {
+        if (data <= 0) {
+            return;
+        }
+
+        /**
+         * Сначала мы фильтруем массив data, чтобы взять не более rowsNumber элементов из data. Для этого используем index,
+         * который говорит нам индекс элемента массива.
+         * Затем проходим по каждому элементу массива data. А в нём у нас хранятся объекты. Поэтому мы берём все значения
+         * свойств объекта с помощью Object.values(). Он нам возвращает массив значений и мы проходим по этому массиву и
+         * добавляем в разметку Значения.
+         */
+        data
+            .filter((_, index) => index < rowsNumber)
+            .forEach((element) => {
+                // Создаём элемент tr - Строка
+                let tr = document.createElement("tr");
+
+                Object.values(element).forEach(e => {
+                    // Создаём элемент td - Ячейка
+                    let td = document.createElement("td");
+                    // Устанавливаем текст Ячейки в значение из объекта
+                    td.innerText = String(e);
+                    // Добавляем Ячейку к Строке
+                    tr.appendChild(td);
+                });
+
+                // Добавляем Строку к Таблице
+                tableElement.appendChild(tr);
+            });
+    }
+
+    /**
+     * Создаёт переключатель страниц таблицы
+     * @param pagesElement ссылка на элемент, котором будет создан переключатель страниц
+     * @param rowsNumber количество строк в таблицы для отображения пользователю
+     * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
+     * @param currentPage номер текущей отображаемой страницы
+     * @param data данные для отображения
+     */
+    #createPager(pagesElement, rowsNumber, pagesNumber, currentPage, data = []) {
+        /**
+         * Добавим элемент Выпадающий список для выбора количества элементов отображения на странице
+         */
+        this.#createItemsPerPageSelector(pagesElement);
+
+        /**
+         * Создадим элементы управления для переключения страниц: кнопки Назад, Следующая и кнопки для перехода
+         * к конкретной странице
+         */
+        this.#createControlButtons(pagesElement, rowsNumber, pagesNumber, currentPage, data);
+    }
+
+    /**
+     * Создаёт элемент Выпадающий список для выбора количества элементов отображения на странице
+     * @param pagesElement родительский контейнер в котором будет размещён элемент Выпадающий список
+     */
+    #createItemsPerPageSelector(pagesElement) {
+        // Создаём элемент Select для отображения опций
+        const selectorElement = document.createElement("select");
+        selectorElement.id = ITEMS_PER_PAGE_ELEMENT;
+        selectorElement.onchange = this.#itemsPerPageChangedHandler;
+
+        // Массив, который содержит допустимые опции
+        const options = ["10", "20", "50", "100"];
+        // Проходим по массиву опций и добавляем их к элементу select
+        options.forEach(opt => {
+            // Создаём элемент опция
+            let optionElement = document.createElement("option");
+
+            // Назначаем значение
+            optionElement.value = opt;
+            // Назначаем текст для отображения пользователю
+            optionElement.innerText = opt;
+
+            // Добавляем элемент option к элементу select
+            selectorElement.appendChild(optionElement);
+        });
+
+        // Добавляем элемент select к контейнеру div, который содержит элементы управления переключением страниц
+        pagesElement.appendChild(selectorElement);
+    }
+
+    /**
+     * Создаёт кнопки управления для переключения страниц
+     * @param pagesElement родительский контейнер в котором будет размещён элемент Выпадающий список
+     * @param rowsNumber количество строк в таблицы для отображения пользователю
+     * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
+     * @param currentPage номер текущей отображаемой страницы
+     * @param data данные для отображения
+     */
+    #createControlButtons(pagesElement, rowsNumber, pagesNumber, currentPage, data = []) {
+        const containerElement = document.createElement("div");
+        containerElement.id = BUTTONS_CONTAINER_ID;
+
+        // Добавим кнопку "Назад"
+        const prevButton = document.createElement("button");
+        prevButton.id = PREV_BUTTON_ID;
+        prevButton.innerText = "<<";
+        prevButton.onclick = this.#prevButtonHandler;
         // Добавляем кнопку в контейнер
-        containerElement.appendChild(buttonElement);
-    });
+        containerElement.appendChild(prevButton);
 
-    // Добавим кнопку "Следующая"
-    const nextButton = document.createElement("button");
-    nextButton.id = NEXT_BUTTON_ID;
-    nextButton.onclick = nextButtonHandler;
-    nextButton.innerText = ">>";
-    // Добавляем кнопку в контейнер
-    containerElement.appendChild(nextButton);
+        // Добавляем кнопки перехода на конкретную страницу
+        [...Array(this.#getNumberOfPages(rowsNumber, pagesNumber, data))].forEach((page, index) => {
+            // Создаём кнопку
+            let buttonElement = document.createElement("button");
+            let buttonNumber = String(index + 1);
+            // Назначаем кнопке id равный "Префикс + индекс кнопки"
+            buttonElement.id = PAGE_NUMBER_PREFIX_ID + index;
+            buttonElement.onclick = this.#buttonHandler;
+            buttonElement.innerText = buttonNumber;
+            buttonElement.value = index;
+            // Если кнопка соответствует выбранной странице, то выделить её
+            if (index === currentPage - 1) {
+                this.#setButtonActive(buttonElement);
+            }
 
-    pagesElement.appendChild(containerElement);
-}
+            // Добавляем кнопку в контейнер
+            containerElement.appendChild(buttonElement);
+        });
 
-/**
- * Возвращает вычисленное значение количества страниц в зависимости от объёма данных
- * @param rowsNumber количество строк в таблицы для отображения пользователю
- * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
- * @param data данные для отображения
- * @returns {number} количество страниц
- */
-function getNumberOfPages(rowsNumber, pagesNumber, data = []) {
-    if (data.length <= 1) {
-        return 1;
+        // Добавим кнопку "Следующая"
+        const nextButton = document.createElement("button");
+        nextButton.id = NEXT_BUTTON_ID;
+        nextButton.onclick = this.#nextButtonHandler;
+        nextButton.innerText = ">>";
+        // Добавляем кнопку в контейнер
+        containerElement.appendChild(nextButton);
+
+        pagesElement.appendChild(containerElement);
     }
 
-    let pages = data.length / pagesNumber;
-    let additionalPage = data.length % pagesNumber;
+    /**
+     * Возвращает вычисленное значение количества страниц в зависимости от объёма данных
+     * @param rowsNumber количество строк в таблицы для отображения пользователю
+     * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
+     * @param data данные для отображения
+     * @returns {number} количество страниц
+     */
+    #getNumberOfPages(rowsNumber, pagesNumber, data = []) {
+        if (data.length <= 1 || data.length <= rowsNumber) {
+            return 1;
+        }
 
-    return pages + additionalPage;
-}
-
-/**
- * Обработчик события на изменение количества элементов на станице
- * @param e
- */
-const itemsPerPageChangedHandler = (e) => {
-    console.log("itemsPerPageChangedHandler", e.target.value);
-}
-
-/**
- * Обработчик нажатия кнопки Назад
- * @param e
- */
-const prevButtonHandler = (e) => {
-    // Выбираем Кнопку, которая в данный момент указывает на активную страницу
-    const activeButton = document.querySelector("button[id ^= 'page-'][class='active']");
-    // Берём номер страницы
-    const activeButtonNumber = activeButton.value;
-
-    // Если это первая страница, то назад уже перейти не можем
-    if (activeButtonNumber == 0) {
-        return;
+        return Math.ceil(data.length / rowsNumber);
     }
 
-    // Очищаем активные стили со всех кнопок
-    clearButtons();
+    /**
+     * Обработчик события на изменение количества элементов на станице
+     * @param e
+     */
+    #itemsPerPageChangedHandler = (e) => {
+        this.#clearChildrenElements(this.#getPager());
+        this.#clearChildrenElements(this.#getTable());
 
-    // Выбираем кнопку слева от ранее активной
-    const prevButton = document.querySelector(`button[id = 'page-${activeButtonNumber - 1}']`);
-
-    // Делаем активной кнопку слева
-    setButtonActive(prevButton);
-}
-
-/**
- * Обработчик нажатия кнопки Следующая
- * @param e
- */
-const nextButtonHandler = (e) => {
-    // Выбираем все кнопки с номерами страниц
-    const buttons = document.querySelectorAll("button[id ^= 'page-']");
-    // Выбираем Кнопку, которая в данный момент указывает на активную страницу
-    const activeButton = document.querySelector("button[id ^= 'page-'][class='active']");
-    // Берём номер страницы
-    const activeButtonNumber = Number(activeButton.value);
-    // Если это последняя страница, то вперёд уже перейти не можем
-    if (activeButtonNumber == buttons.length - 1) {
-        return;
+        /**
+         * Создаём первоначальную структуру Таблицы в HTML
+         */
+        const itemsPerPage = e.target.value;
+        this.#createTable(this.#getTable(), itemsPerPage, this.#pagesNumber, this.#header, this.#data);
+        this.#createPager(this.#getPager(), itemsPerPage, this.#pagesNumber, 1, this.#data);
     }
 
-    // Очищаем активные стили со всех кнопок
-    clearButtons();
+    /**
+     * Обработчик нажатия кнопки Назад
+     * @param e
+     */
+    #prevButtonHandler = (e) => {
+        // Выбираем Кнопку, которая в данный момент указывает на активную страницу
+        const activeButton = document.querySelector("button[id ^= 'page-'][class='active']");
+        // Берём номер страницы
+        const activeButtonNumber = activeButton.value;
 
-    // Выбираем кнопку справа от ранее активной
-    const nextButton = document.querySelector(`button[id = 'page-${activeButtonNumber + 1}']`);
+        // Если это первая страница, то назад уже перейти не можем
+        if (activeButtonNumber == 0) {
+            return;
+        }
 
-    // Делаем активной кнопку слева
-    setButtonActive(nextButton);
-}
+        // Очищаем активные стили со всех кнопок
+        this.#clearButtons();
 
-/**
- * Обработчик нажатия кнопки с номером страницы
- * @param e
- */
-const buttonHandler = (e) => {
-    clearButtons();
-    setButtonActive(e.target);
-}
+        // Выбираем кнопку слева от ранее активной
+        const prevButton = document.querySelector(`button[id = 'page-${activeButtonNumber - 1}']`);
 
-/**
- * Убирает со всех копок выделенный/активный стиль
- */
-function clearButtons() {
-    const buttons = document.querySelectorAll("button[id ^= 'page-']");
-    buttons.forEach(button => button.classList.remove("active"));
-}
+        // Делаем активной кнопку слева
+        this.#setButtonActive(prevButton);
+    }
 
-/**
- * Выделяет стилем кнопку с выбранной страницей
- * @param buttonElement элемент
- */
-function setButtonActive(buttonElement) {
-    buttonElement.classList.add("active");
+    /**
+     * Обработчик нажатия кнопки Следующая
+     * @param e
+     */
+    #nextButtonHandler = (e) => {
+        // Выбираем все кнопки с номерами страниц
+        const buttons = document.querySelectorAll("button[id ^= 'page-']");
+        // Выбираем Кнопку, которая в данный момент указывает на активную страницу
+        const activeButton = document.querySelector("button[id ^= 'page-'][class='active']");
+        // Берём номер страницы
+        const activeButtonNumber = Number(activeButton.value);
+        // Если это последняя страница, то вперёд уже перейти не можем
+        if (activeButtonNumber == buttons.length - 1) {
+            return;
+        }
+
+        // Очищаем активные стили со всех кнопок
+        this.#clearButtons();
+
+        // Выбираем кнопку справа от ранее активной
+        const nextButton = document.querySelector(`button[id = 'page-${activeButtonNumber + 1}']`);
+
+        // Делаем активной кнопку слева
+        this.#setButtonActive(nextButton);
+    }
+
+    /**
+     * Обработчик нажатия кнопки с номером страницы
+     * @param e
+     */
+    #buttonHandler = (e) => {
+        this.#clearButtons();
+        this.#setButtonActive(e.target);
+    }
+
+    /**
+     * Убирает со всех копок выделенный/активный стиль
+     */
+    #clearButtons() {
+        const buttons = document.querySelectorAll("button[id ^= 'page-']");
+        buttons.forEach(button => button.classList.remove("active"));
+    }
+
+    /**
+     * Выделяет стилем кнопку с выбранной страницей
+     * @param buttonElement элемент
+     */
+    #setButtonActive(buttonElement) {
+        buttonElement.classList.add("active");
+    }
+
+    #clearChildrenElements(parent) {
+        parent.textContent = "";
+    }
+
+    #getTable() {
+        return this.#tableElement;
+    }
+
+    #getPager() {
+        return this.#pagesElement;
+    }
 }
 
 /**
  * Заполним Таблицу, когда завершится загрузка страницы
  */
+const tables = [];
+
 document.addEventListener("DOMContentLoaded", () => {
     const rowsNumber = 10; // Количество строк в таблице
     const pagesNumber = 5; // Количество страниц для выбора
     const tableElement = document.getElementById("mytable");
     const pagesElement = document.getElementById("pages");
-    Table(tableElement, pagesElement, rowsNumber, pagesNumber, getHeader(), getData());
-})
+    tables.push(new Table(tableElement, pagesElement, rowsNumber, pagesNumber, getHeader(), getData()));
+});
 
 /**
  * Функция возвращает названия колонок
