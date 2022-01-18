@@ -173,7 +173,7 @@ class Table {
         /**
          * Добавим элемент Выпадающий список для выбора количества элементов отображения на странице
          */
-        this.#createItemsPerPageSelector(pagesElement);
+        this.#createItemsPerPageSelector(pagesElement, rowsNumber);
 
         /**
          * Создадим элементы управления для переключения страниц: кнопки Назад, Следующая и кнопки для перехода
@@ -185,8 +185,9 @@ class Table {
     /**
      * Создаёт элемент Выпадающий список для выбора количества элементов отображения на странице
      * @param pagesElement родительский контейнер в котором будет размещён элемент Выпадающий список
+     * @param selectedOption выбранная опция количества строк на странице
      */
-    #createItemsPerPageSelector(pagesElement) {
+    #createItemsPerPageSelector(pagesElement, selectedOption = "10") {
         // Создаём элемент Select для отображения опций
         const selectorElement = document.createElement("select");
         selectorElement.id = ITEMS_PER_PAGE_ELEMENT;
@@ -207,6 +208,8 @@ class Table {
             // Добавляем элемент option к элементу select
             selectorElement.appendChild(optionElement);
         });
+
+        selectorElement.value = selectedOption;
 
         // Добавляем элемент select к контейнеру div, который содержит элементы управления переключением страниц
         pagesElement.appendChild(selectorElement);
