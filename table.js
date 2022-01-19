@@ -20,68 +20,57 @@ const BUTTONS_CONTAINER_ID = "container";
  * @constructor
  */
 class Table {
-    #tableElement;
-    #pagesElement;
-    #rowsNumber;
-    #pagesNumber;
-    #header;
-    #data;
+    #config;
 
-    constructor(tableElement, pagesElement, rowsNumber, pagesNumber, header, data) {
+    constructor(config) {
         /**
          * Проверяем входные данные на корректность
          */
-        if (!tableElement) {
+        if (!config.tableElement) {
             throw Error("Table element should be provided");
         }
-        if (!pagesElement) {
+        if (!config.pagesElement) {
             throw Error("Pages element should be provided");
         }
-        if (rowsNumber < 3) {
+        if (config.rowsNumber < 3) {
             throw Error("A number of rows should be more then tree elements");
         }
-        if (pagesNumber < 1) {
+        if (config.pagesNumber < 1) {
             throw Error("A number of pages should be more then one element");
         }
 
-        this.#tableElement = tableElement;
-        this.#pagesElement = pagesElement;
-        this.#rowsNumber = rowsNumber;
-        this.#pagesNumber = pagesNumber;
-        this.#header = header;
-        this.#data = data;
+        this.#config = config;
+
+        /**
+         * Создаём таблицу
+         */
+        this.#createTable(config);
+    }
+
+    /**
+     * Создаёт таблицу
+     * @param config ссылка на конфигурацию Таблицы
+     */
+    #createTable(config) {
+        /**
+         * Удаляем предыдущее содержимое таблицы
+         */
+        this.#clearChildrenElements(config.pagesElement);
+        this.#clearChildrenElements(config.tableElement);
 
         /**
          * Создаём первоначальную структуру Таблицы в HTML
          */
-        this.#createTable(tableElement, rowsNumber, pagesNumber, header, data);
-
-        /**
-         * Создаём переключатель страниц таблицы
-         */
-        this.#createPager(pagesElement, rowsNumber, pagesNumber, 1, data);
-    }
-
-    /**
-     * Создаёт таблицу в HTML разметке
-     * @param tableElement ссылка на элемент Table в DOM
-     * @param rowsNumber количество строк в таблицы для отображения пользователю
-     * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
-     * @param header список Заголовков колонок Таблицы
-     * @param data данные для отображения
-     */
-    #createTable(tableElement, rowsNumber, pagesNumber, header, data) {
-        this.#createHeader(tableElement, header, data);
-        this.#createBody(tableElement, rowsNumber, data);
+        this.#createHeader(config);
+        this.#createBody(config);
+        this.#createPager(config);
     }
 
     /**
      * Создаёт Заголовок Таблицы
-     * @param tableElement ссылка на элемент Table в DOM
-     * @param header список Заголовков колонок Таблицы
-     * @param data данные для отображения
+     * @param config ссылка на конфигурацию Таблицы
      */
-    #createHeader(tableElement, header = [], data = []) {
+    #createHeader(config) {
         let headerCaption;
 
         /**
@@ -89,10 +78,10 @@ class Table {
          * Иначе попытаемся взять названия Заголовков как Имена свойств из данных.
          * Если нам не передели ни Заголовков, не Данных, то просто выходим.
          */
-        if (header.length !== 0) {
-            headerCaption = header;
-        } else if (data.length > 0) {
-            headerCaption = Object.keys(data[0]);
+        if (config.header && config.header.length !== 0) {
+            headerCaption = config.header;
+        } else if (config.data && config.data.length > 0) {
+            headerCaption = Object.keys(config.data[0]);
         } else {
             return;
         }
@@ -120,17 +109,15 @@ class Table {
         /**
          * Добавили к Таблицу Заголовок
          */
-        tableElement.appendChild(thead);
+        config.tableElement.appendChild(thead);
     }
 
     /**
      * Создаёт тело Таблицы
-     * @param tableElement ссылка на элемент Table в DOM
-     * @param rowsNumber количество строк в таблицы для отображения пользователю
-     * @param data данные для отображения
+     * @param config ссылка на конфигурацию Таблицы
      */
-    #createBody(tableElement, rowsNumber, data = []) {
-        if (data <= 0) {
+    #createBody(config) {
+        if (config.data <= 0) {
             return;
         }
 
@@ -141,8 +128,11 @@ class Table {
          * свойств объекта с помощью Object.values(). Он нам возвращает массив значений и мы проходим по этому массиву и
          * добавляем в разметку Значения.
          */
-        data
-            .filter((_, index) => index < rowsNumber)
+        config.data
+            .filter(
+                (_, index) =>
+                    index >= (config.currentPage - 1) * config.rowsNumber && index < config.currentPage * config.rowsNumber
+            )
             .forEach((element) => {
                 // Создаём элемент tr - Строка
                 let tr = document.createElement("tr");
@@ -157,37 +147,32 @@ class Table {
                 });
 
                 // Добавляем Строку к Таблице
-                tableElement.appendChild(tr);
+                config.tableElement.appendChild(tr);
             });
     }
 
     /**
      * Создаёт переключатель страниц таблицы
-     * @param pagesElement ссылка на элемент, котором будет создан переключатель страниц
-     * @param rowsNumber количество строк в таблицы для отображения пользователю
-     * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
-     * @param currentPage номер текущей отображаемой страницы
-     * @param data данные для отображения
+     * @param config ссылка на конфигурацию Таблицы
      */
-    #createPager(pagesElement, rowsNumber, pagesNumber, currentPage, data = []) {
+    #createPager(config) {
         /**
          * Добавим элемент Выпадающий список для выбора количества элементов отображения на странице
          */
-        this.#createItemsPerPageSelector(pagesElement, rowsNumber);
+        this.#createItemsPerPageSelector(config);
 
         /**
          * Создадим элементы управления для переключения страниц: кнопки Назад, Следующая и кнопки для перехода
          * к конкретной странице
          */
-        this.#createControlButtons(pagesElement, rowsNumber, pagesNumber, currentPage, data);
+        this.#createControlButtons(config);
     }
 
     /**
      * Создаёт элемент Выпадающий список для выбора количества элементов отображения на странице
-     * @param pagesElement родительский контейнер в котором будет размещён элемент Выпадающий список
-     * @param selectedOption выбранная опция количества строк на странице
+     * @param config ссылка на конфигурацию Таблицы
      */
-    #createItemsPerPageSelector(pagesElement, selectedOption = "10") {
+    #createItemsPerPageSelector(config) {
         // Создаём элемент Select для отображения опций
         const selectorElement = document.createElement("select");
         selectorElement.id = ITEMS_PER_PAGE_ELEMENT;
@@ -209,21 +194,17 @@ class Table {
             selectorElement.appendChild(optionElement);
         });
 
-        selectorElement.value = selectedOption;
+        selectorElement.value = config.rowsNumber;
 
         // Добавляем элемент select к контейнеру div, который содержит элементы управления переключением страниц
-        pagesElement.appendChild(selectorElement);
+        config.pagesElement.appendChild(selectorElement);
     }
 
     /**
      * Создаёт кнопки управления для переключения страниц
-     * @param pagesElement родительский контейнер в котором будет размещён элемент Выпадающий список
-     * @param rowsNumber количество строк в таблицы для отображения пользователю
-     * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
-     * @param currentPage номер текущей отображаемой страницы
-     * @param data данные для отображения
+     * @param config ссылка на конфигурацию Таблицы
      */
-    #createControlButtons(pagesElement, rowsNumber, pagesNumber, currentPage, data = []) {
+    #createControlButtons(config) {
         const containerElement = document.createElement("div");
         containerElement.id = BUTTONS_CONTAINER_ID;
 
@@ -236,7 +217,7 @@ class Table {
         containerElement.appendChild(prevButton);
 
         // Добавляем кнопки перехода на конкретную страницу
-        [...Array(this.#getNumberOfPages(rowsNumber, pagesNumber, data))].forEach((page, index) => {
+        [...Array(this.#getNumberOfPages(config))].forEach((page, index) => {
             // Создаём кнопку
             let buttonElement = document.createElement("button");
             let buttonNumber = String(index + 1);
@@ -244,9 +225,9 @@ class Table {
             buttonElement.id = PAGE_NUMBER_PREFIX_ID + index;
             buttonElement.onclick = this.#buttonHandler;
             buttonElement.innerText = buttonNumber;
-            buttonElement.value = index;
+            buttonElement.value = String(index + 1);
             // Если кнопка соответствует выбранной странице, то выделить её
-            if (index === currentPage - 1) {
+            if (index === config.currentPage - 1) {
                 this.#setButtonActive(buttonElement);
             }
 
@@ -262,22 +243,19 @@ class Table {
         // Добавляем кнопку в контейнер
         containerElement.appendChild(nextButton);
 
-        pagesElement.appendChild(containerElement);
+        config.pagesElement.appendChild(containerElement);
     }
 
     /**
      * Возвращает вычисленное значение количества страниц в зависимости от объёма данных
-     * @param rowsNumber количество строк в таблицы для отображения пользователю
-     * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
-     * @param data данные для отображения
-     * @returns {number} количество страниц
+     * @param config ссылка на конфигурацию Таблицы
      */
-    #getNumberOfPages(rowsNumber, pagesNumber, data = []) {
-        if (data.length <= 1 || data.length <= rowsNumber) {
+    #getNumberOfPages(config) {
+        if (config.data.length <= 1 || config.data.length <= config.rowsNumber) {
             return 1;
         }
 
-        return Math.ceil(data.length / rowsNumber);
+        return Math.ceil(config.data.length / config.rowsNumber);
     }
 
     /**
@@ -285,15 +263,10 @@ class Table {
      * @param e
      */
     #itemsPerPageChangedHandler = (e) => {
-        this.#clearChildrenElements(this.#getPager());
-        this.#clearChildrenElements(this.#getTable());
+        this.#config.rowsNumber = e.target.value;
+        this.#config.currentPage = 1;
 
-        /**
-         * Создаём первоначальную структуру Таблицы в HTML
-         */
-        const itemsPerPage = e.target.value;
-        this.#createTable(this.#getTable(), itemsPerPage, this.#pagesNumber, this.#header, this.#data);
-        this.#createPager(this.#getPager(), itemsPerPage, this.#pagesNumber, 1, this.#data);
+        this.#createTable(this.#config);
     }
 
     /**
@@ -304,21 +277,18 @@ class Table {
         // Выбираем Кнопку, которая в данный момент указывает на активную страницу
         const activeButton = document.querySelector("button[id ^= 'page-'][class='active']");
         // Берём номер страницы
-        const activeButtonNumber = activeButton.value;
+        const currentPage = activeButton.value;
 
         // Если это первая страница, то назад уже перейти не можем
-        if (activeButtonNumber == 0) {
+        if (currentPage == 1) {
             return;
         }
 
         // Очищаем активные стили со всех кнопок
         this.#clearButtons();
 
-        // Выбираем кнопку слева от ранее активной
-        const prevButton = document.querySelector(`button[id = 'page-${activeButtonNumber - 1}']`);
-
-        // Делаем активной кнопку слева
-        this.#setButtonActive(prevButton);
+        this.#config.currentPage = currentPage - 1;
+        this.#createTable(this.#config);
     }
 
     /**
@@ -331,20 +301,14 @@ class Table {
         // Выбираем Кнопку, которая в данный момент указывает на активную страницу
         const activeButton = document.querySelector("button[id ^= 'page-'][class='active']");
         // Берём номер страницы
-        const activeButtonNumber = Number(activeButton.value);
+        const currentPage = Number(activeButton.value);
         // Если это последняя страница, то вперёд уже перейти не можем
-        if (activeButtonNumber == buttons.length - 1) {
+        if (currentPage == buttons.length) {
             return;
         }
 
-        // Очищаем активные стили со всех кнопок
-        this.#clearButtons();
-
-        // Выбираем кнопку справа от ранее активной
-        const nextButton = document.querySelector(`button[id = 'page-${activeButtonNumber + 1}']`);
-
-        // Делаем активной кнопку слева
-        this.#setButtonActive(nextButton);
+        this.#config.currentPage = currentPage + 1;
+        this.#createTable(this.#config);
     }
 
     /**
@@ -379,22 +343,6 @@ class Table {
     #clearChildrenElements(parent) {
         parent.textContent = "";
     }
-
-    /**
-     * Возвращает элемент Таблица
-     * @returns {*}
-     */
-    #getTable() {
-        return this.#tableElement;
-    }
-
-    /**
-     * Возвращает ссылку на элемент с кнопками переключения страниц
-     * @returns {*}
-     */
-    #getPager() {
-        return this.#pagesElement;
-    }
 }
 
 /**
@@ -403,11 +351,19 @@ class Table {
 const tables = [];
 
 document.addEventListener("DOMContentLoaded", () => {
-    const rowsNumber = 10; // Количество строк в таблице
+    const rowsNumber = "10"; // Количество строк в таблице
     const pagesNumber = 5; // Количество страниц для выбора
     const tableElement = document.getElementById("mytable");
     const pagesElement = document.getElementById("pages");
-    tables.push(new Table(tableElement, pagesElement, rowsNumber, pagesNumber, getHeader(), getData()));
+    tables.push(new Table({
+        tableElement,
+        pagesElement,
+        rowsNumber,
+        pagesNumber,
+        currentPage: 1,
+        header: getHeader(),
+        data: getData()
+    }));
 });
 
 /**
