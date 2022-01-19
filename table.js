@@ -15,6 +15,7 @@ const BUTTONS_CONTAINER_ID = "container";
  * @param pagesElement ссылка на элемент, в котором разместится переключатель страниц
  * @param rowsNumber количество строк в таблицы для отображения пользователю
  * @param pagesNumber количество страниц, предлагаемы пользователю для переключения между страницами
+ * @param currentPage номер текущей, отображаемой страницы
  * @param header список Заголовков колонок Таблицы
  * @param data данные для отображения
  * @constructor
