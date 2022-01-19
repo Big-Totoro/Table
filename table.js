@@ -1,18 +1,18 @@
-// Идентификатор элемента для выбора количество отображаемых строк на странице
-const ITEMS_PER_PAGE_ELEMENT = "itemsPerPage";
-// Идентификатор кнопки Назад
-const PREV_BUTTON_ID = "prevButton";
-// Идентификатор кнопки Следующая
-const NEXT_BUTTON_ID = "nextButton";
-// Идентификатор префикса кнопки "Перейти на страницу номер ", например, "page-0"
-const PAGE_NUMBER_PREFIX_ID = "page-";
-// Идентификатор контейнера кнопок
-const BUTTONS_CONTAINER_ID = "container";
-
 /**
  * Создаёт Таблицу в HTML разметке
  */
 class Table {
+    // Идентификатор элемента для выбора количество отображаемых строк на странице
+    #ITEMS_PER_PAGE_ELEMENT = "itemsPerPage";
+    // Идентификатор кнопки Назад
+    #PREV_BUTTON_ID = "prevButton";
+    // Идентификатор кнопки Следующая
+    #NEXT_BUTTON_ID = "nextButton";
+    // Идентификатор префикса кнопки "Перейти на страницу номер ", например, "page-0"
+    #PAGE_NUMBER_PREFIX_ID = "page-";
+    // Идентификатор контейнера кнопок
+    #BUTTONS_CONTAINER_ID = "container";
+
     // Конфигурация Таблицы
     #config;
     // Массив, который содержит допустимые опции
@@ -120,7 +120,7 @@ class Table {
         thead.appendChild(tr);
 
         /**
-         * Добавили к Таблицу Заголовок
+         * Добавили в Таблицу Заголовок
          */
         config.tableElement.appendChild(thead);
     }
@@ -139,8 +139,8 @@ class Table {
          * ОТ (ТекущаяСтраница - 1) * КоличествоСтрокНаСтранице ДО ТекущаяСтраница * КоличествоСтрокНаСтранице.
          * Для этого используем index, который говорит нам индекс элемента массива, currentPage - номер текущей страницы и
          * rowsNumber - количество строк на странице.
-         * Затем проходим по каждому элементу массива data. А в нём у нас хранятся объекты. Поэтому мы берём все значения
-         * свойств объекта с помощью Object.values(). Он нам возвращает массив значений и мы проходим по этому массиву и
+         * Затем, проходим по каждому элементу массива data. А в нём у нас хранятся объекты. Поэтому мы берём все значения
+         * свойств объекта с помощью метода Object.values(). Он нам возвращает массив значений и мы проходим по этому массиву и
          * добавляем в разметку Значения.
          */
         config.data
@@ -152,7 +152,7 @@ class Table {
                 // Создаём элемент tr - Строка
                 let tr = document.createElement("tr");
 
-                // Проходим по все значениям объекта
+                // Проходим по всем значениям объекта
                 Object.values(element).forEach(e => {
                     // Создаём элемент td - Ячейка
                     let td = document.createElement("td");
@@ -191,7 +191,7 @@ class Table {
     #createItemsPerPageSelector(config) {
         // Создаём элемент Select для отображения опций
         const selectorElement = document.createElement("select");
-        selectorElement.id = ITEMS_PER_PAGE_ELEMENT;
+        selectorElement.id = this.#ITEMS_PER_PAGE_ELEMENT;
         selectorElement.onchange = this.#itemsPerPageChangedHandler;
 
         // Проходим по массиву опций и добавляем их к элементу select
@@ -222,11 +222,11 @@ class Table {
     #createControlButtons(config) {
         // Создаём Контейнер, который будет содержать кнопки управления переключением страниц
         const containerElement = document.createElement("div");
-        containerElement.id = BUTTONS_CONTAINER_ID;
+        containerElement.id = this.#BUTTONS_CONTAINER_ID;
 
         // Добавим кнопку "Назад"
         const prevButton = document.createElement("button");
-        prevButton.id = PREV_BUTTON_ID;
+        prevButton.id = this.#PREV_BUTTON_ID;
         prevButton.innerText = "<<";
         prevButton.onclick = this.#prevButtonHandler;
         // Добавляем кнопку в Контейнер
@@ -238,11 +238,11 @@ class Table {
             let buttonElement = document.createElement("button");
             let buttonNumber = String(index + 1); // index + 1, чтобы номер страницы начинался с единицы.
             // Назначаем кнопке id равный "Префикс + индекс кнопки"
-            buttonElement.id = PAGE_NUMBER_PREFIX_ID + index;
+            buttonElement.id = this.#PAGE_NUMBER_PREFIX_ID + index;
             buttonElement.onclick = this.#buttonHandler;
             buttonElement.innerText = buttonNumber;
             buttonElement.value = String(index + 1);
-            // Если кнопка соответствует выбранной странице, то выделить её
+            // Если кнопка соответствует выбранной странице, то выделяем её
             if (index === config.currentPage - 1) {
                 this.#setButtonActive(buttonElement);
             }
@@ -253,7 +253,7 @@ class Table {
 
         // Добавим кнопку "Следующая"
         const nextButton = document.createElement("button");
-        nextButton.id = NEXT_BUTTON_ID;
+        nextButton.id = this.#NEXT_BUTTON_ID;
         nextButton.onclick = this.#nextButtonHandler;
         nextButton.innerText = ">>";
         // Добавляем кнопку в Контейнер
@@ -359,500 +359,4 @@ class Table {
     #clearChildrenElements(parent) {
         parent.textContent = "";
     }
-}
-
-const tables = [];
-
-/**
- * Заполним Таблицу, когда завершится загрузка страницы
- */
-document.addEventListener("DOMContentLoaded", () => {
-    const rowsNumber = Table.options[0]; // Количество строк в таблице
-    const pagesNumber = 5; // Количество страниц для выбора
-    const tableElement = document.getElementById("mytable");
-    const pagesElement = document.getElementById("pages");
-
-    tables.push(new Table({
-        tableElement, // ссылка на элемент Table в DOM
-        pagesElement, // ссылка на элемент, в котором разместится переключатель страниц
-        rowsNumber, // количество строк в таблице для отображения пользователю
-        pagesNumber, // количество страниц, предлагаемых пользователю для переключения между страницами
-        currentPage: 1, // номер текущей, отображаемой страницы
-        header: getHeader(), // список Заголовков колонок Таблицы
-        data: getData() // данные для отображения
-    }));
-});
-
-/**
- * Функция возвращает названия колонок
- */
-function getHeader() {
-    return [
-        "Индекс",
-        "Возраст",
-        "Имя",
-        "Пол",
-        "Компания",
-        "E-mail",
-        "Телефон",
-        "Адрес"
-    ];
-}
-
-/**
- * Функция поставляет данные для таблицы
- */
-function getData() {
-    return [
-        {
-            "index": 0,
-            "age": 26,
-            "name": "Lacey Vang",
-            "gender": "female",
-            "company": "GEOFARM",
-            "email": "laceyvang@geofarm.com",
-            "phone": "+1 (980) 460-2250",
-            "address": "197 Highland Avenue, Craig, North Carolina, 5133"
-        },
-        {
-            "index": 1,
-            "age": 25,
-            "name": "Janette Richardson",
-            "gender": "female",
-            "company": "DIGIGENE",
-            "email": "janetterichardson@digigene.com",
-            "phone": "+1 (854) 473-3935",
-            "address": "279 Whitwell Place, Drytown, Kentucky, 3045"
-        },
-        {
-            "index": 2,
-            "age": 32,
-            "name": "Workman Rodriquez",
-            "gender": "male",
-            "company": "HIVEDOM",
-            "email": "workmanrodriquez@hivedom.com",
-            "phone": "+1 (800) 468-2214",
-            "address": "261 Aurelia Court, Winston, New Hampshire, 7764"
-        },
-        {
-            "index": 3,
-            "age": 35,
-            "name": "Adkins Cain",
-            "gender": "male",
-            "company": "HONOTRON",
-            "email": "adkinscain@honotron.com",
-            "phone": "+1 (818) 563-2383",
-            "address": "421 Garden Place, Darlington, Palau, 1527"
-        },
-        {
-            "index": 4,
-            "age": 28,
-            "name": "Peterson Hardy",
-            "gender": "male",
-            "company": "ECRATIC",
-            "email": "petersonhardy@ecratic.com",
-            "phone": "+1 (864) 419-3605",
-            "address": "713 Turnbull Avenue, Romeville, Federated States Of Micronesia, 6534"
-        },
-        {
-            "index": 5,
-            "age": 25,
-            "name": "Cochran Stanley",
-            "gender": "male",
-            "company": "ENTOGROK",
-            "email": "cochranstanley@entogrok.com",
-            "phone": "+1 (836) 413-2299",
-            "address": "254 Durland Place, Frank, Virgin Islands, 8994"
-        },
-        {
-            "index": 6,
-            "age": 20,
-            "name": "Imelda Glenn",
-            "gender": "female",
-            "company": "BIOTICA",
-            "email": "imeldaglenn@biotica.com",
-            "phone": "+1 (835) 515-3640",
-            "address": "491 Ditmars Street, Bellamy, Colorado, 2616"
-        },
-        {
-            "index": 7,
-            "age": 28,
-            "name": "Desiree Martinez",
-            "gender": "female",
-            "company": "CONCILITY",
-            "email": "desireemartinez@concility.com",
-            "phone": "+1 (899) 400-2885",
-            "address": "175 Clymer Street, Sims, Georgia, 2063"
-        },
-        {
-            "index": 8,
-            "age": 20,
-            "name": "Madeleine Mckee",
-            "gender": "female",
-            "company": "KINETICA",
-            "email": "madeleinemckee@kinetica.com",
-            "phone": "+1 (942) 553-2155",
-            "address": "198 Macdougal Street, Gouglersville, Northern Mariana Islands, 6718"
-        },
-        {
-            "index": 9,
-            "age": 27,
-            "name": "Acevedo Townsend",
-            "gender": "male",
-            "company": "ARCHITAX",
-            "email": "acevedotownsend@architax.com",
-            "phone": "+1 (888) 589-3683",
-            "address": "991 Waldorf Court, Tolu, New Jersey, 9605"
-        },
-        {
-            "index": 10,
-            "age": 21,
-            "name": "Armstrong Riddle",
-            "gender": "male",
-            "company": "KOFFEE",
-            "email": "armstrongriddle@koffee.com",
-            "phone": "+1 (861) 471-3065",
-            "address": "849 Jerome Street, Wolcott, Vermont, 4750"
-        },
-        {
-            "index": 11,
-            "age": 32,
-            "name": "Marcy Raymond",
-            "gender": "female",
-            "company": "EDECINE",
-            "email": "marcyraymond@edecine.com",
-            "phone": "+1 (967) 536-2397",
-            "address": "539 Ovington Court, Clarktown, Virginia, 1306"
-        },
-        {
-            "index": 12,
-            "age": 26,
-            "name": "Candice Kirk",
-            "gender": "female",
-            "company": "HARMONEY",
-            "email": "candicekirk@harmoney.com",
-            "phone": "+1 (911) 582-2129",
-            "address": "616 Glenmore Avenue, Hickory, Pennsylvania, 7220"
-        },
-        {
-            "index": 13,
-            "age": 26,
-            "name": "Sexton Chambers",
-            "gender": "male",
-            "company": "RUGSTARS",
-            "email": "sextonchambers@rugstars.com",
-            "phone": "+1 (993) 582-2321",
-            "address": "295 Concord Street, Wakulla, Idaho, 7278"
-        },
-        {
-            "index": 14,
-            "age": 20,
-            "name": "Amy Baldwin",
-            "gender": "female",
-            "company": "ANIMALIA",
-            "email": "amybaldwin@animalia.com",
-            "phone": "+1 (801) 561-2334",
-            "address": "311 Stillwell Avenue, Dubois, Nebraska, 2671"
-        },
-        {
-            "index": 15,
-            "age": 31,
-            "name": "Sheila Mcleod",
-            "gender": "female",
-            "company": "APEXIA",
-            "email": "sheilamcleod@apexia.com",
-            "phone": "+1 (936) 493-3906",
-            "address": "710 Oliver Street, Tetherow, Montana, 2424"
-        },
-        {
-            "index": 16,
-            "age": 34,
-            "name": "Harris Goodman",
-            "gender": "male",
-            "company": "AMRIL",
-            "email": "harrisgoodman@amril.com",
-            "phone": "+1 (998) 429-2806",
-            "address": "469 Veronica Place, Carlton, Marshall Islands, 5020"
-        },
-        {
-            "index": 17,
-            "age": 27,
-            "name": "Hogan Pope",
-            "gender": "male",
-            "company": "COLUMELLA",
-            "email": "hoganpope@columella.com",
-            "phone": "+1 (918) 532-3731",
-            "address": "471 Jamaica Avenue, Martinez, Delaware, 8071"
-        },
-        {
-            "index": 18,
-            "age": 23,
-            "name": "Downs Johns",
-            "gender": "male",
-            "company": "EXOZENT",
-            "email": "downsjohns@exozent.com",
-            "phone": "+1 (808) 509-3538",
-            "address": "379 Perry Terrace, Canby, Tennessee, 9838"
-        },
-        {
-            "index": 19,
-            "age": 38,
-            "name": "Sandoval Larsen",
-            "gender": "male",
-            "company": "SPACEWAX",
-            "email": "sandovallarsen@spacewax.com",
-            "phone": "+1 (972) 437-2973",
-            "address": "244 Hart Place, Roulette, Texas, 6249"
-        },
-        {
-            "index": 20,
-            "age": 34,
-            "name": "Mabel Santiago",
-            "gender": "female",
-            "company": "QUINEX",
-            "email": "mabelsantiago@quinex.com",
-            "phone": "+1 (904) 553-3936",
-            "address": "206 Melrose Street, Welda, South Carolina, 1348"
-        },
-        {
-            "index": 21,
-            "age": 22,
-            "name": "Emma Cantu",
-            "gender": "female",
-            "company": "CORIANDER",
-            "email": "emmacantu@coriander.com",
-            "phone": "+1 (861) 449-3528",
-            "address": "866 Berry Street, Utting, Alaska, 3982"
-        },
-        {
-            "index": 22,
-            "age": 22,
-            "name": "Diane Head",
-            "gender": "female",
-            "company": "FORTEAN",
-            "email": "dianehead@fortean.com",
-            "phone": "+1 (962) 470-3980",
-            "address": "432 Ridgewood Avenue, Rowe, Kansas, 4262"
-        },
-        {
-            "index": 23,
-            "age": 39,
-            "name": "Walsh Gonzales",
-            "gender": "male",
-            "company": "ZILLACON",
-            "email": "walshgonzales@zillacon.com",
-            "phone": "+1 (994) 443-3810",
-            "address": "394 Stuart Street, Rew, New York, 3396"
-        },
-        {
-            "index": 24,
-            "age": 35,
-            "name": "Barr Bright",
-            "gender": "male",
-            "company": "PORTALIS",
-            "email": "barrbright@portalis.com",
-            "phone": "+1 (990) 504-3262",
-            "address": "222 Lincoln Place, Mammoth, Oklahoma, 301"
-        },
-        {
-            "index": 25,
-            "age": 20,
-            "name": "Staci Avila",
-            "gender": "female",
-            "company": "SONGBIRD",
-            "email": "staciavila@songbird.com",
-            "phone": "+1 (889) 557-3463",
-            "address": "728 Chauncey Street, Davenport, California, 6962"
-        },
-        {
-            "index": 26,
-            "age": 36,
-            "name": "Cherry Pugh",
-            "gender": "female",
-            "company": "GRUPOLI",
-            "email": "cherrypugh@grupoli.com",
-            "phone": "+1 (922) 579-2249",
-            "address": "622 Lott Avenue, Templeton, Mississippi, 3817"
-        },
-        {
-            "index": 27,
-            "age": 25,
-            "name": "Hunt Herman",
-            "gender": "male",
-            "company": "CEMENTION",
-            "email": "huntherman@cemention.com",
-            "phone": "+1 (850) 515-3225",
-            "address": "999 Cleveland Street, Germanton, Wyoming, 5336"
-        },
-        {
-            "index": 28,
-            "age": 31,
-            "name": "Gomez Jackson",
-            "gender": "male",
-            "company": "EMTRAK",
-            "email": "gomezjackson@emtrak.com",
-            "phone": "+1 (861) 590-3605",
-            "address": "242 Schenck Avenue, Warsaw, Oregon, 2939"
-        },
-        {
-            "index": 29,
-            "age": 29,
-            "name": "Lora Benton",
-            "gender": "female",
-            "company": "RAMJOB",
-            "email": "lorabenton@ramjob.com",
-            "phone": "+1 (972) 494-3270",
-            "address": "905 McDonald Avenue, Canterwood, Puerto Rico, 3974"
-        },
-        {
-            "index": 30,
-            "age": 34,
-            "name": "Jennie Mathews",
-            "gender": "female",
-            "company": "RONELON",
-            "email": "jenniemathews@ronelon.com",
-            "phone": "+1 (895) 411-2162",
-            "address": "146 Bethel Loop, Cumminsville, Illinois, 773"
-        },
-        {
-            "index": 31,
-            "age": 33,
-            "name": "Candy Stephenson",
-            "gender": "female",
-            "company": "OPTICOM",
-            "email": "candystephenson@opticom.com",
-            "phone": "+1 (987) 546-3121",
-            "address": "534 Pitkin Avenue, Chicopee, Indiana, 1274"
-        },
-        {
-            "index": 32,
-            "age": 22,
-            "name": "Lesley Zamora",
-            "gender": "female",
-            "company": "VIRXO",
-            "email": "lesleyzamora@virxo.com",
-            "phone": "+1 (945) 520-2098",
-            "address": "211 Regent Place, Bartley, Wisconsin, 7765"
-        },
-        {
-            "index": 33,
-            "age": 21,
-            "name": "Eleanor Bird",
-            "gender": "female",
-            "company": "AMTAS",
-            "email": "eleanorbird@amtas.com",
-            "phone": "+1 (926) 544-3207",
-            "address": "371 Hart Street, Snowville, North Dakota, 1063"
-        },
-        {
-            "index": 34,
-            "age": 37,
-            "name": "Vasquez Wade",
-            "gender": "male",
-            "company": "ULTRASURE",
-            "email": "vasquezwade@ultrasure.com",
-            "phone": "+1 (804) 432-3131",
-            "address": "212 Stone Avenue, Robinette, Maine, 8071"
-        },
-        {
-            "index": 35,
-            "age": 29,
-            "name": "Mable Mccullough",
-            "gender": "female",
-            "company": "ACRODANCE",
-            "email": "mablemccullough@acrodance.com",
-            "phone": "+1 (988) 418-3722",
-            "address": "409 Harwood Place, Cresaptown, Nevada, 1576"
-        },
-        {
-            "index": 36,
-            "age": 30,
-            "name": "Susanne Buckner",
-            "gender": "female",
-            "company": "TETRATREX",
-            "email": "susannebuckner@tetratrex.com",
-            "phone": "+1 (984) 435-3073",
-            "address": "603 Lee Avenue, Columbus, Michigan, 9681"
-        },
-        {
-            "index": 37,
-            "age": 26,
-            "name": "Sandy Mullen",
-            "gender": "female",
-            "company": "ZENTHALL",
-            "email": "sandymullen@zenthall.com",
-            "phone": "+1 (831) 571-2710",
-            "address": "428 Windsor Place, Draper, Washington, 1665"
-        },
-        {
-            "index": 38,
-            "age": 25,
-            "name": "Alma Hickman",
-            "gender": "female",
-            "company": "TROPOLI",
-            "email": "almahickman@tropoli.com",
-            "phone": "+1 (917) 447-2233",
-            "address": "737 Kaufman Place, Enetai, Minnesota, 6632"
-        },
-        {
-            "index": 39,
-            "age": 37,
-            "name": "Madelyn Terry",
-            "gender": "female",
-            "company": "ZORK",
-            "email": "madelynterry@zork.com",
-            "phone": "+1 (936) 476-2887",
-            "address": "890 Homecrest Court, Sunnyside, Missouri, 8053"
-        },
-        {
-            "index": 40,
-            "age": 28,
-            "name": "Knight Wilkins",
-            "gender": "male",
-            "company": "COGENTRY",
-            "email": "knightwilkins@cogentry.com",
-            "phone": "+1 (812) 445-3808",
-            "address": "764 Seagate Avenue, Courtland, Hawaii, 3935"
-        },
-        {
-            "index": 41,
-            "age": 37,
-            "name": "Minerva Robles",
-            "gender": "female",
-            "company": "LIMAGE",
-            "email": "minervarobles@limage.com",
-            "phone": "+1 (977) 575-3366",
-            "address": "236 Oceanview Avenue, Bluffview, New Mexico, 1063"
-        },
-        {
-            "index": 42,
-            "age": 40,
-            "name": "Karla Montgomery",
-            "gender": "female",
-            "company": "EXTRAWEAR",
-            "email": "karlamontgomery@extrawear.com",
-            "phone": "+1 (997) 548-2421",
-            "address": "484 Hyman Court, Dahlen, Massachusetts, 9116"
-        },
-        {
-            "index": 43,
-            "age": 40,
-            "name": "Randall Mcintyre",
-            "gender": "male",
-            "company": "GOLISTIC",
-            "email": "randallmcintyre@golistic.com",
-            "phone": "+1 (883) 493-3443",
-            "address": "572 Vandam Street, Ola, Maryland, 9625"
-        },
-        {
-            "index": 44,
-            "age": 31,
-            "name": "Yesenia Henson",
-            "gender": "female",
-            "company": "COMVOY",
-            "email": "yeseniahenson@comvoy.com",
-            "phone": "+1 (989) 401-2998",
-            "address": "690 Sackett Street, Guilford, Alabama, 8719"
-        }
-    ];
 }
