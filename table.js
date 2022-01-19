@@ -287,7 +287,10 @@ class Table {
         // Очищаем активные стили со всех кнопок
         this.#clearButtons();
 
+        // Устанавливаем активную страницу в конфигурации
         this.#config.currentPage = currentPage - 1;
+
+        // Пересоздаём Таблицу
         this.#createTable(this.#config);
     }
 
@@ -302,12 +305,16 @@ class Table {
         const activeButton = document.querySelector("button[id ^= 'page-'][class='active']");
         // Берём номер страницы
         const currentPage = Number(activeButton.value);
+
         // Если это последняя страница, то вперёд уже перейти не можем
         if (currentPage == buttons.length) {
             return;
         }
 
+        // Устанавливаем активную страницу в конфигурации
         this.#config.currentPage = currentPage + 1;
+
+        // Пересоздаём Таблицу
         this.#createTable(this.#config);
     }
 
@@ -316,8 +323,10 @@ class Table {
      * @param e
      */
     #buttonHandler = (e) => {
-        this.#clearButtons();
-        this.#setButtonActive(e.target);
+        // Устанавливаем активную страницу в конфигурации
+        this.#config.currentPage = Number(e.target.value);
+        // Пересоздаём Таблицу
+        this.#createTable(this.#config);
     }
 
     /**
